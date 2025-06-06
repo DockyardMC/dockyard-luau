@@ -22,6 +22,7 @@ dependencies {
 
 kotlin {
     jvmToolchain(23)
+    explicitApi()
 
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_23)
