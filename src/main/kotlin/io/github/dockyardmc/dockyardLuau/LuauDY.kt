@@ -9,7 +9,7 @@ import kotlin.reflect.jvm.reflect
 /**
  * Provide an API for using Luau in Dockyard.
  */
-public object LuauDY {
+public class LuauDY {
     @Throws(
         java.lang.NoSuchMethodException::class,
         IllegalArgumentException::class,
@@ -33,9 +33,25 @@ public object LuauDY {
         }
     }
 
-    @OptIn(ExperimentalReflectionOnLambdas::class)
-    public fun registerFunction(func: Function<Any>) {
-        val function = func.reflect()
+
+    public val state: LuaState = LuaState.newState()
+
+    public fun registerFunction(functionName: String, func: () -> Unit) {
+        val function = LuaFunc.preallocate { _: LuaState ->
+            func()
+
+            return@preallocate 1
+        }
+
+        // I have no idea what I'm doing
+        state.pushCFunction({ funcState: LuaState ->
+            if (state.checkStringArg(2) == functionName)
+                funcState.pushCFunction(function, functionName)
+            else
+                funcState.pushNil()
+
+            return@pushCFunction 1
+        }, functionName)
     }
 
     /** Register an event to dockyard written in a file written in lua.
